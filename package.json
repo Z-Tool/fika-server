@@ -1,0 +1,17 @@
+{
+  "name": "chinese-words",
+  "version": "0.1.0",
+  "description": "中文词库",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {},
+  "dependencies": {
+    "cheerio": "^0.20.0",
+    "simple-uri": "^0.1.6",
+    "superagent": "^2.0.0"
+  }
+}
