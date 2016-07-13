@@ -11,6 +11,7 @@
   "devDependencies": {},
   "dependencies": {
     "cheerio": "^0.20.0",
+    "mkdirp": "^0.5.1",
     "simple-uri": "^0.1.6",
     "superagent": "^2.0.0"
   }
