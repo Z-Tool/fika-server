@@ -165,25 +165,16 @@ def deal(file_name):
 
 if __name__ == '__main__':
 
-    #将要转换的词库添加在这里就可以了
-    o = [
-        './download/艺术_艺术词库/中华美学总词库.scel',
-        './download/艺术_艺术词库/中国书法文化研究专业词汇.scel',
-        './download/艺术_艺术词库/中国书画篆刻艺术.scel',
-        './download/艺术_艺术词库/中国古代陶瓷及相关.scel',
-        './download/艺术_艺术词库/中国画专业词库.scel',
-        './download/艺术_艺术词库/中国相声师承关系族谱.scel',
-        './download/艺术_艺术词库/中国音乐文化词库.scel',
-    ]
 
-    for f in o:
-        deal(f)
+    #将要转换的词库添加在这里就可以了
+    o = sys.argv[1]
+    deal(o)
 
     #保存结果
     f = open('sougou.txt','w')
     for count,py,word in GTable:
         #GTable保存着结果，是一个列表，每个元素是一个元组(词频,拼音,中文词组)，有需要的话可以保存成自己需要个格式
         #我没排序，所以结果是按照上面输入文件的顺序
-        f.write( unicode('{%(count)s}' %{'count':count}+py+' '+ word).encode('utf8') )#最终保存文件的编码，可以自给改
+        f.write( unicode('{{%(count)s}}' %{'count':count}+' {{' + py + '}} {{'+ word + '}}').encode('utf8') )#最终保存文件的编码，可以自给改
         f.write('\n')
     f.close()

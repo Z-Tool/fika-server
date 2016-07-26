@@ -12,6 +12,9 @@
   "dependencies": {
     "cheerio": "^0.20.0",
     "mkdirp": "^0.5.1",
+    "mongoose": "^4.5.7",
+    "python-shell": "^0.4.0",
+    "recursive-readdir": "^2.0.0",
     "simple-uri": "^0.1.6",
     "superagent": "^2.0.0"
   }

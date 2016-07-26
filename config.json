@@ -1,0 +1,6 @@
+{
+  "conn":{
+    "host": "localhost",
+    "dbName": "fika"
+  }
+}

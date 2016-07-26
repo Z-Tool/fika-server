@@ -191,16 +191,17 @@ function downloadFile(filePath, link) {
       let file = fs.createWriteStream(filePath);
       let responseSent = false;
       let uri = new Uri(link);
+      console.log(`>>>> ${uri.relative}  >>>> ${encodeURI(uri.relative)}`);
       let options = {
         hostname: uri.host,
         port: 80,
         method: 'GET',
-        path: uri.relative,
+        path: encodeURI(uri.relative),
         headers: {
           'Upgrade-Insecure-Requests': 1,
           'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Referer': 'http://pinyin.sogou.com/dict/cate/index/160?rf=dictindex',
+          'Referer': 'http://pinyin.sogou.com',
           'Accept-Encoding': 'gzip, deflate, sdch',
           'Accept-Language': 'en,zh-CN;q=0.8,zh;q=0.6,en-US;q=0.4,ru;q=0.2,fr;q=0.2,ja;q=0.2,zh-TW;q=0.2,ko;q=0.2,vi;q=0.2,id;q=0.2,ms;q=0.2',
           'Cookie': 'ssuid=9980485630; sct=2; LSTMV=1016%2C175; LCLKINT=309995; CXID=4408FAF51F4615A3BFDA53AFBDD3A42D; SUV=1454078435487117921270607; ad=Qw47ykllll2qKoU7lllllVNiVeUlllllWkCUvkllllUllllllZlll5@@@@@@@@@@; SUID=2202960E7E23900A00000000544ADED8; SMYUV=1468131514244211; redref=https://www.google.com/; IPLOC=CN4401',
