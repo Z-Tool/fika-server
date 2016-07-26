@@ -10,29 +10,30 @@ const Word = require('./model/Word');
 const Category = require('./model/Category');
 const Dictionary = require('./model/Dictionary');
 const readline = require('readline');
+const exec = require('child_process').exec;
 // connect to database
 conn.connect();
 
 
-// recursive(LIB_FOLDER, function (err, files) {
-//   // Files is an array of filename
-//   files.reduce((promise, file) => {
-//     return promise.then(() => {
-//       if (/\.scel$/.test(file)) {
-//         return importFile(file);
-//       } else {
-//         return Promise.resolve();
-//       }
-//     });
-//   }, Promise.resolve(1)).then(() => {
-//     console.log('done');
-//     process.exit(0);
-//   }, err => {
-//     console.log(err);
-//     conn.close();
-//     process.exit(0);
-//   });
-// });
+recursive(LIB_FOLDER, function (err, files) {
+  // Files is an array of filename
+  files.reduce((promise, file) => {
+    return promise.then(() => {
+      if (/\.scel$/.test(file)) {
+        return importFile(file);
+      } else {
+        return Promise.resolve();
+      }
+    });
+  }, Promise.resolve(1)).then(() => {
+    console.log('done');
+    process.exit(0);
+  }, err => {
+    console.log(err);
+    conn.close();
+    process.exit(0);
+  });
+});
 
 function importFile(file) {
   const fileInfoArr = file.split('/');
@@ -43,12 +44,13 @@ function importFile(file) {
   return importCategory(cateName)
     .then(cate => {
       return importDictionary(dictName, cate._id);
+    }).then((res) => {
+      return parseScelFile(file).then(function (results) {
+        console.log(results);
+        return importTxt(res.category, res.dictionary);
+      });
     }).then(() => {
-      return parseScelFile();
-    }).then(() => {
-      return importTxt();
-    }).then(() => {
-      console.log(`正在入库 ${cateName} : ${dictName} 成功`);
+      console.log(`入库 ${cateName} : ${dictName} 成功`);
     }, (err) => {
       console.log(err);
       throw err;
@@ -102,11 +104,17 @@ function importDictionary(dictName, cate) {
           if (err) {
             reject(err);
           } else {
-            resolve(res);
+            resolve({
+              category: cate,
+              dictionary: res._id,
+            });
           }
         });
       } else {
-        resolve(dict);
+        resolve({
+          category: cate,
+          dictionary: dict._id,
+        });
       }
     });
   });
@@ -115,6 +123,9 @@ function importDictionary(dictName, cate) {
 
 function importWord(word, source, cateId, dictId) {
   return new Promise((resolve, reject) => {
+    if (!word) {
+      return resolve();
+    }
     Word.create({
       source: source,
       text: word.text, // 单词文字
@@ -133,38 +144,52 @@ function importWord(word, source, cateId, dictId) {
   });
 }
 
-function importTxt() {
-  let lines = [];
-  let lineReader = readline.createInterface({
-    input: fs.createReadStream('./sougou.txt')
-  });
-
-  lineReader.on('line', function (line) {
-    const word = getWord(line);
-    lineReader.pause();
-    importWord(word).then( () => {
-      lineReader.resume();
-    }, (err) => {
-      console.log(err);
-      throw err;
+function importTxt(cate, dict) {
+  return new Promise((resolve, reject) => {
+    let lines = [];
+    let lineReader = readline.createInterface({
+      input: fs.createReadStream('./sougou.txt')
     });
-  });
 
-  lineReader.on('close', function() {
-    resolve();
+    lineReader.on('line', function (line) {
+      const word = getWord(line);
+      lineReader.pause();
+      importWord(word, 'sougou', cate, dict).then( (word) => {
+        console.log('word import success', word.text);
+        lineReader.resume();
+      }, (err) => {
+        console.log(err);
+        throw err;
+      });
+    });
+
+    lineReader.on('close', function() {
+      resolve();
+    });
   });
 }
 
+function getWord(line) {
+  if (!line) { return; }
+  const tmp = line.split(/\s/);
+  return {
+    py : tmp[1].match(/{{(.+?)}}/)[1].trim(),
+    text: tmp[2].match(/{{(.+?)}}/)[1].trim(),
+  };
+}
+
+
+
 function parseScelFile(filePath) {
-  return new Promsie((resolve, reject) => {
-    var options = {
-      args: [filePath]
-    };
-    PythonShell.run('toTxt.py', options, function (err, results) {
-      if (err) {
-        return reject (err);
+  console.log(filePath);
+  const cmd = `python ./toTxt.py ${filePath}`;
+  console.log(`command: ${cmd}`);
+  return new Promise((resolve, reject) => {
+    exec(cmd, function(error, stdout, stderr) {
+      if (error) {
+        return reject(error);
       }
-      resolve(results);
+      resolve(stdout);
     });
   });
 }
