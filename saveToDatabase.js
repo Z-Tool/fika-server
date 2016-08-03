@@ -11,6 +11,7 @@ const Category = require('./model/Category');
 const Dictionary = require('./model/Dictionary');
 const readline = require('readline');
 const exec = require('child_process').exec;
+const failedFiles = [];
 // connect to database
 conn.connect();
 
@@ -27,10 +28,12 @@ recursive(LIB_FOLDER, function (err, files) {
     });
   }, Promise.resolve(1)).then(() => {
     console.log('done');
+    console.log(failedFiles);
     process.exit(0);
   }, err => {
     console.log(err);
     conn.close();
+    console.log(failedFiles);
     process.exit(0);
   });
 });
@@ -53,7 +56,7 @@ function importFile(file) {
       console.log(`入库 ${cateName} : ${dictName} 成功`);
     }, (err) => {
       console.log(err);
-      throw err;
+      failedFiles.push(file);
     });
 }
 
@@ -172,16 +175,20 @@ function importTxt(cate, dict) {
 function getWord(line) {
   if (!line) { return; }
   const tmp = line.split(/\s/);
-  return {
-    py : tmp[1].match(/{{(.+?)}}/)[1].trim(),
-    text: tmp[2].match(/{{(.+?)}}/)[1].trim(),
-  };
+  try {
+    return {
+      py : tmp[1].match(/{{(.+?)}}/)[1].trim(),
+      text: tmp[2].match(/{{(.+?)}}/)[1].trim(),
+    };
+  } catch (e) {
+    console.log(line);
+    console.log(e);
+  }
 }
 
 
 
 function parseScelFile(filePath) {
-  console.log(filePath);
   const cmd = `python ./toTxt.py ${filePath}`;
   console.log(`command: ${cmd}`);
   return new Promise((resolve, reject) => {
