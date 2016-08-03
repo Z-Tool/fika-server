@@ -42,7 +42,6 @@ router.get('/associate', function*(next) {
       $in: dictionaries,
     };
   }
-  console.log(filter);
   let words = yield randomWord(filter, size);
   if (size === 1) {
     words = [words];
@@ -64,12 +63,16 @@ router.get('/snake', function*(next) {
   const dictionaries = parseQueryToArray(query.dictionaries);
   if (!word) {
     word = yield randomWord();
+    if (!word) {
+      return this.body = words;
+    }
     word = word.text;
   }
   words.push(word);
   let curWord = word;
   let index = 1;
   while(index++ < size) {
+    if (!curWord) { break; }
     const lastChar = _s.last(curWord, 1);
     const filter = {
       text: new RegExp('^' + lastChar),
@@ -85,6 +88,7 @@ router.get('/snake', function*(next) {
       };
     }
     const newWord = yield randomWord(filter, 1);
+    if (!newWord) { break; }
     curWord = newWord.text;
     words.push(curWord);
   }
@@ -93,11 +97,37 @@ router.get('/snake', function*(next) {
 
 
 /**
- * 获取词库分类
+ * 获取词库分类列表
  */
 router.get('/categories', function*(next) {
-  const categories = yield Category.find().exec();
+  const query = this.query;
+  const name = query.name;
+  const filter = {};
+  if (name) {
+    filter._id = new RegExp(name);
+  }
+  const categories = yield Category.find(filter).exec();
   this.body = categories;
+});
+
+
+/**
+ * 获取字典列表
+ */
+router.get('/dictionaries', function*(next) {
+  const query = this.query;
+  const name = query.name;
+  const categories = parseQueryToArray(query.categories);
+  const filter = {};
+  if (name) {
+    filter._id = new RegExp(name);
+  }
+  if (categories) {
+    filter.categories = { $in : categories };
+  }
+
+  const dictionaries = yield Dictionary.find(filter).exec();
+  this.body = dictionaries;
 });
 
 function randomWord(filter, size) {
@@ -110,6 +140,7 @@ function randomWord(filter, size) {
       if (err) {
         reject(err);
       } else {
+        if (result.length === 0) { return resolve(null); }
         if (size === 1) {
           resolve(result[0]);
         } else {
