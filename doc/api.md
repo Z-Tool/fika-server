@@ -1,5 +1,9 @@
 ## API列表
 
+## categories
+
+查询目前已有的分类
+
 
 ## associate(word, type, dictionaries)
 
@@ -31,6 +35,23 @@
 ## snake(word, size, categories, dictionaries)
 
 单词接龙
+
+```
+url: snake?word=联想
+
+[
+  "联想",
+  "想到的",
+  "的职责",
+  "责任险",
+  "险哉透撞儿",
+  "儿岛香绪里",
+  "里包恩的考验",
+  "验收",
+  "收集木材",
+  "材料区"
+]
+```
 
 #### word `String`
 

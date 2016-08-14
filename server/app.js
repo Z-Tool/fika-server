@@ -12,8 +12,48 @@ const BusinessError = require('./error/BusinessError.js');
 const DEFAULT_SNAKE_SIZE = 10;
 const DEFAULT_ASSOCIATE_SIZE = 1;
 const QUERRY_SPLITER = /,/;
+const PORT = process.env.PORT || 3210;
 // connect to database
 conn.connect();
+
+function parseQueryToArray(str) {
+  return typeof str === 'string' ? str.split(QUERRY_SPLITER) : null;
+}
+
+function parseQueryToRegExp(str) {
+  return typeof str === 'string' ? new RegExp(str.split(QUERRY_SPLITER).join('|')) : null;
+}
+
+function filterFactory() {
+  return function (query) {
+    let word = query.word;
+    const categories = parseQueryToArray(query.categories);
+    const dictionaries = parseQueryToRegExp(query.dictionaries);
+    const filter = {};
+    if (word) {
+      filter.text = new RegExp(word);
+    }
+    if (categories) {
+      filter.cate = {
+        $in: categories,
+      };
+    }
+    if (dictionaries) {
+      filter.dict = dictionaries;
+    }
+    return filter;
+  }
+}
+const getSize = function (sizeStr, defaultSize) {
+  let size;
+  try {
+    size = sizeStr ? parseInt(sizeStr, 10) : defaultSize;
+  } catch (e) {
+    size = defaultSize;
+  }
+  return size;
+}
+const getRandomFilter = filterFactory();
 
 /**
  * 词汇联想
@@ -24,7 +64,7 @@ router.get('/associate', function*(next) {
   let size = query.size;
   size = size ? parseInt(size, 10) : DEFAULT_ASSOCIATE_SIZE;
   const categories = parseQueryToArray(query.categories);
-  const dictionaries = parseQueryToArray(query.dictionaries);
+  const dictionaries = parseQueryToRegExp(query.dictionaries);
   if (!word) {
     throw new BusinessError('args_required', 'need word params');
   }
@@ -38,9 +78,7 @@ router.get('/associate', function*(next) {
     };
   }
   if (dictionaries) {
-    filter.dict = {
-      $in: dictionaries,
-    };
+    filter.dict =  dictionaries;
   }
   let words = yield randomWord(filter, size);
   if (size === 1) {
@@ -60,9 +98,18 @@ router.get('/snake', function*(next) {
   let size = query.size;
   size = size ? parseInt(size, 10) : DEFAULT_SNAKE_SIZE;
   const categories = parseQueryToArray(query.categories);
-  const dictionaries = parseQueryToArray(query.dictionaries);
+  const dictionaries = parseQueryToRegExp(query.dictionaries);
+  const filter = {};
+  if (categories) {
+    filter.cate = {
+      $in: categories,
+    };
+  }
+  if (dictionaries) {
+    filter.dict = dictionaries;
+  }
   if (!word) {
-    word = yield randomWord();
+    word = yield randomWord(filter);
     if (!word) {
       return this.body = words;
     }
@@ -74,25 +121,31 @@ router.get('/snake', function*(next) {
   while(index++ < size) {
     if (!curWord) { break; }
     const lastChar = _s.last(curWord, 1);
-    const filter = {
+    const wordFilter = Object.assign({}, filter, {
       text: new RegExp('^' + lastChar),
-    };
-    if (categories) {
-      filter.cate = {
-        $in: categories,
-      };
-    }
-    if (dictionaries) {
-      filter.dict = {
-        $in: dictionaries,
-      };
-    }
-    const newWord = yield randomWord(filter, 1);
+    });
+
+    const newWord = yield randomWord(wordFilter, 1);
     if (!newWord) { break; }
     curWord = newWord.text;
     words.push(curWord);
   }
   this.body = words;
+});
+
+
+/**
+ * 随机词汇
+ */
+
+router.get('/random', function*(next) {
+  const filter = getRandomFilter(this.query);
+  const size = getSize(this.query.size);
+  let words = yield randomWord(filter, size);
+  if (size === 1) {
+    words = [words];
+  }
+  this.body = words.map(word => word.text);
 });
 
 
@@ -151,9 +204,7 @@ function randomWord(filter, size) {
   });
 }
 
-function parseQueryToArray(str) {
-  return typeof str === 'string' ? str.split(QUERRY_SPLITER) : null;
-}
+
 
 app.use(function*(next) {
   try {
@@ -172,4 +223,5 @@ app
   .use(router.routes())
   .use(router.allowedMethods());
 
-app.listen(3210);
+console.log(`server start at ${PORT}`);
+app.listen(PORT);
