@@ -27,11 +27,23 @@ function parseQueryToRegExp(str) {
 function filterFactory() {
   return function (query) {
     let word = query.word;
+    let head = query.head;
+    let tail = query.tail;
     const categories = parseQueryToArray(query.categories);
     const dictionaries = parseQueryToRegExp(query.dictionaries);
     const filter = {};
+    let text;
+    if (head) {
+      text = `^${head}`;
+    }
+    if (tail) {
+      text = `${text || ''}.*${tail}$`;
+    }
     if (word) {
-      filter.text = new RegExp(word);
+      text = word;
+    }
+    if (text) {
+      filter.text = new RegExp(text);
     }
     if (categories) {
       filter.cate = {
@@ -41,6 +53,7 @@ function filterFactory() {
     if (dictionaries) {
       filter.dict = dictionaries;
     }
+    console.log(filter);
     return filter;
   }
 }
