@@ -1,7 +1,7 @@
 {
-  "name": "chinese-words",
+  "name": "fika-server",
   "version": "0.1.0",
-  "description": "中文词库",
+  "description": "server of fika",
   "main": "index.js",
   "scripts": {
     "start": "node ./server/app.js",
