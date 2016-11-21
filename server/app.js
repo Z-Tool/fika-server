@@ -1,7 +1,9 @@
 'use strict';
 
 const koa = require('koa');
+const path = require('path');
 const router = require('koa-router')();
+const serve = require('koa-static');
 const app = koa();
 const conn = require('../conn');
 const Word = require('../model/Word');
@@ -217,8 +219,9 @@ function randomWord(filter, size) {
   });
 }
 
-
-
+const staticRoot = path.resolve(__dirname, './view');
+console.log(staticRoot); 
+app.use(serve(staticRoot));
 app.use(function*(next) {
   try {
     yield next;
